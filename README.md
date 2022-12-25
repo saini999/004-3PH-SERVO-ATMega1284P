@@ -35,6 +35,10 @@ Fuses Can be Set by reading the microcontroller datasheet or from the Website: h
 
 WARN: This will only work with Internal Oscillator as Occillator Pins are being used as I/O.
 
+# ATMega1284P TQFP44 Pins and I/O Diagram
+
+![ATMega1284P Image](ATMega1284P-44PIN.jpeg)
+
 # Input Voltage: 
 
     Phase R: PIN PA0
