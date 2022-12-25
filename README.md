@@ -42,9 +42,9 @@ WARN: This will only work with Internal Oscillator as Occillator Pins are being 
     Phase B: PIN PA2
 # Output Voltage: 
 
-Phase R: PIN PA3
-Phase Y: PIN PA4
-Phase B: PIN PA5
+    Phase R: PIN PA3
+    Phase Y: PIN PA4
+    Phase B: PIN PA5
 
 # Current CT:
 
