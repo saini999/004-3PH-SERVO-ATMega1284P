@@ -10,10 +10,16 @@ Arduino code & Proteus Simulation Project Included
 
 
 THIS WILL NOT WORK WITH ARDUINO UNO/Mega2560 BOARD
+
+
 Due to less I/O Pins on UNO Board
 
 MCU: ATMega1284P (44Pin)
+
+
 MCU Arduino Core: MightyCore by MCUDude //https://github.com/MCUdude/MightyCore
+
+
 MCU Clock: 8Mhz (Internal Oscillator)
 
 # MCU Fuse Bits: 
