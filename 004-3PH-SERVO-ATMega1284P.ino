@@ -77,9 +77,27 @@ ALARMS: ErIn = Input Voltage Error (Either too low or too high)
 
 //Define Microcontroller Pins Instead of using Variables to optimize the code
 
-#define ok PIN_PB5
-#define plus PIN_PC1
-#define minus PIN_PC0
+#define ok PIN_PC4
+#define plus PIN_PC5
+#define minus PIN_PC6
+
+#define RINPIN PIN_PA0
+#define YINPIN PIN_PA1
+#define BINPIN PIN_PA2
+#define ROTPIN PIN_PA3
+#define YOTPIN PIN_PA4
+#define BOTPIN PIN_PA5
+#define current PIN_PA6
+#define motorRFW PIN_PB0
+#define motorRBW PIN_PB1
+#define motorYFW PIN_PB2
+#define motorYBW PIN_PB3
+#define motorBFW PIN_PB4
+#define motorBBW PIN_PB5
+#define contactor PIN_PB6
+//#define hz
+
+/*
 #define hz PIN_PC2
 #define inVolt PIN_PC3
 #define outVolt PIN_PC4
@@ -87,6 +105,8 @@ ALARMS: ErIn = Input Voltage Error (Either too low or too high)
 #define motor0Fwd PIN_PB4
 #define motor0Rev PIN_PB3
 #define power PIN_PB2
+*/
+
 
 //Intialize the SevenSegament Display
 SevSeg display1;
@@ -126,7 +146,7 @@ int encMenu;
 int menu;
 long ontime,offtime;
 float freq;   /*,hzdiff*/
-int involtage,outvoltage,currentload;
+int rinvoltage,routvoltage,yinvoltage,youtvoltage,binvoltage,boutvoltage,currentload;
 
 
 bool okold = false;
@@ -154,10 +174,14 @@ setupDisplay();
 setIN(ok);
 setIN(plus);
 setIN(minus);
-setIN(inVolt);
-setIN(outVolt);
+setIN(RINPIN);
+setIN(YINPIN);
+setIN(BINPIN);
+setIN(ROTPIN);
+setIN(YOTPIN);
+setIN(BOTPIN);
 setIN(current);
-setIN(hz);
+//setIN(hz);
 ///////////////////////////////////////////////////////
 /////////comment setup pin if not needed///////////////
 //setIN(setupPin); //change setup mode from RUN/SETUP//
@@ -165,10 +189,13 @@ setIN(hz);
 
 //Set Outputs
 //setOUT(); is a custom Function Defined at the bottom of the Program!
-setOUT(motor0Fwd);
-setOUT(motor0Rev);
-setOUT(power);
-
+setOUT(motorRFW);
+setOUT(motorRBW);
+setOUT(motorYFW);
+setOUT(motorYBW);
+setOUT(motorBFW);
+setOUT(motorBBW);
+setOUT(contactor);
 //Setup Parameter Variables
 
 //This for Variables to read from EEPROM Memory of the uC on startup
@@ -870,20 +897,20 @@ void display(String str, int deci) {
 void setupDisplay() {
     int displayType = COMMON_ANODE;
 
-   int digit1 = PIN_PB1; 
-   int digit2 = PIN_PD4; 
-   int digit3 = PIN_PD1; 
-   int digit4 = PIN_PD2; 
+   int digit1 = PIN_PC3; 
+   int digit2 = PIN_PC2; 
+   int digit3 = PIN_PC1; 
+   int digit4 = PIN_PC0; 
    
    
-   int segA = PIN_PD6; 
-   int segB = PIN_PD0;
-   int segC = PIN_PB6; 
-   int segD = PIN_PD7; 
-   int segE = PIN_PB0; 
-   int segF = PIN_PB7; 
-   int segG = PIN_PD3; 
-   int segDP = PIN_PD5; 
+   int segA = PIN_PD0; 
+   int segB = PIN_PD1;
+   int segC = PIN_PD2; 
+   int segD = PIN_PD3; 
+   int segE = PIN_PD4; 
+   int segF = PIN_PD5; 
+   int segG = PIN_PD6; 
+   int segDP = PIN_PD7; 
    
   int numberOfDigits = 4; 
 

@@ -1,5 +1,5 @@
 {
-    "configuration": "bootloader=no_bootloader,pinout=standard,eeprom=keep,variant=modelP,BOD=2v7,LTO=Os,clock=16MHz_external",
+    "configuration": "bootloader=no_bootloader,pinout=standard,eeprom=keep,variant=modelP,BOD=4v3,LTO=Os_flto,clock=8MHz_internal",
     "board": "MightyCore:avr:1284",
-    "sketch": "003-1PH-SERVO-ATMega328P.ino"
+    "sketch": "004-3PH-SERVO-ATMega1284P.ino"
 }
