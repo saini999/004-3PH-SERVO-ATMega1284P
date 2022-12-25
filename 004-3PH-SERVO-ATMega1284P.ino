@@ -626,22 +626,64 @@ void updateScreenData(bool status) {
       displayVar(boutvoltage, 0);
       break;
     case 13:
-      display("LoAd", 0);
+      display("ryIP", 0);
       break;
     case 14:
-      displayVar(currentload, 0);
+      displayVar((rinvoltage + yinvoltage) * 0.866, 0);
       break;
     case 15:
-      display("FrEq", 0);
+      display("ryOP", 0);
       break;
     case 16:
-      displayVar((int)freq, 0);
+      displayVar((routvoltage + youtvoltage) * 0.866, 0);
+      break;
     case 17:
+      display("ybIP", 0);
+      break;
+    case 18:
+      displayVar((yinvoltage + binvoltage) * 0.866, 0);
+      break;
+    case 19:
+      display("ybOP", 0);
+      break;
+    case 20:
+      displayVar((youtvoltage + boutvoltage) * 0.866, 0);
+      break;
+    case 21:
+      display("brIP", 0);
+      break;
+    case 22:
+      displayVar((binvoltage + rinvoltage) * 0.866, 0);
+      break;
+    case 23:
+      display("brOP", 0);
+      break;
+    case 24:
+      displayVar((boutvoltage + routvoltage) * 0.866, 0);
+      break;
+    case 25:
+      display("LoAd", 0);
+      break;
+    case 26:
+      displayVar(currentload, 0);
+      break;
+    case 27:
+      display("FrEq", 0);
+      break;
+    case 28:
+      displayVar((int)freq, 0);
+    case 29:
       if(status){
         menu = 0;
       } else {
         menu = -1;
       }
+      break;
+    case -2:
+      menu = 28;
+      break;
+    case -1:
+      if(status){ menu = 28; }
       break;
     }
 
