@@ -27,8 +27,8 @@ Fuses Can be Set by reading the microcontroller datasheet or from the Website: h
 
 WARN: This will only work with Internal Oscillator as Occillator Pins are being used as I/O.
 
-Project Start Date: 17-Nov-2022
-Last Update: 24-Dec-2022
+Project Start Date: 24-Dec-2022
+Last Update: 25-Dec-2022
 
 Input Voltage: Phase R: PIN PA0
                Phase Y: PIN PA1
@@ -179,6 +179,7 @@ bool hzold = false;
 /**/
 bool mode = false;
 bool switched = false;
+bool tmrstp;
 /**/
 
 BlockNot on(TON, SECONDS);
@@ -287,7 +288,6 @@ void loop() {
     mode = !mode;
     switched = true;
     encMenu = 0;
-    refresh.start(true);
   }
   if(!read(ok) && !read(plus) && !read(minus) && switched == true){
     switched = false;
@@ -551,7 +551,9 @@ void updateScreenData(bool status) {
         default:
           break;
       }
-      menu++;
+      if(!tmrstp){
+        menu++;
+      }
     }
 
     //Show Error if Available
@@ -894,19 +896,17 @@ void runSetup() {
 
 //Check OK Button Pressed
 
-bool tmrstp;
+
 
 void checkok() {
   if(read(ok) && okold == !read(ok)){
   okold = read(ok);
   encMenu++;
   if(!mode && !tmrstp){
-    refresh.stop();
-    tmrstp = !tmrstp;
+    tmrstp = true;
   }
-  if(!mode && tmrstp){
-    refresh.start();
-    tmrstp = !tmrstp;
+  else if(!mode) {
+    tmrstp = false;
   }
   refresh.reset();
   encUpdate();
