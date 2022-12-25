@@ -95,7 +95,7 @@ ALARMS: ErIn = Input Voltage Error (Either too low or too high)
 #define motorBFW PIN_PB4
 #define motorBBW PIN_PB5
 #define contactor PIN_PB6
-//#define hz
+#define hz PIN_PA3
 
 /*
 #define hz PIN_PC2
@@ -292,7 +292,7 @@ void checkhz() {
 
 //Check If input voltage is within Low & High voltage Set by Parameters
 bool inputVok() {
-  if(involtage > ILV && involtage < IHV){
+  if(rinvoltage > ILV && rinvoltage < IHV && yinvoltage > ILV && yinvoltage < IHV && binvoltage > ILV && binvoltage < IHV){
     return true;
   } else {
     return false;
@@ -300,7 +300,7 @@ bool inputVok() {
 }
 //Check If output voltage is within Low & High voltage Set by Parameters
 bool outputVok() {
-  if(outvoltage > OLV && outvoltage < OHV){
+  if(routvoltage > OLV && routvoltage < OHV && youtvoltage > OLV && youtvoltage < OHV && boutvoltage > OLV && boutvoltage < OHV){
     return true;
   } else {
     return false;
@@ -318,8 +318,8 @@ bool currentok() {
 
 
 //Check Voltage Difference from Set Voltage
-bool diffcheck() { //(returns true if difference is more than set difference and runs motor)
-  int dif = SETV - outvoltage;
+bool rdiffcheck() { //(returns true if difference is more than set difference and runs motor)
+  int dif = SETV - routvoltage;
   if(dif < 0){
     dif = dif * -1;
   }
@@ -329,6 +329,31 @@ bool diffcheck() { //(returns true if difference is more than set difference and
     return false;
   }
 }
+
+bool ydiffcheck() { //(returns true if difference is more than set difference and runs motor)
+  int dif = SETV - youtvoltage;
+  if(dif < 0){
+    dif = dif * -1;
+  }
+  if(dif > DIFF){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool bdiffcheck() { //(returns true if difference is more than set difference and runs motor)
+  int dif = SETV - boutvoltage;
+  if(dif < 0){
+    dif = dif * -1;
+  }
+  if(dif > DIFF){
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 //Run Mode
 
@@ -342,15 +367,40 @@ void runNormal() {
     checkinputs();
   }
   //digitalWrite(motor0Rev, HIGH);
-  if(outvoltage < SETV && diffcheck() && inputVok() && currentok()){
-    digitalWrite(motor0Fwd, HIGH);
+  if(routvoltage < SETV && rdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorRFW, HIGH);
   } else {
-    digitalWrite(motor0Fwd, LOW);
+    digitalWrite(motorRFW, LOW);
   }
-  if(outvoltage > SETV && diffcheck() && inputVok() && currentok()){
-    digitalWrite(motor0Rev, HIGH);
+  if(routvoltage > SETV && rdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorRBW, HIGH);
   } else {
-    digitalWrite(motor0Rev, LOW);
+    digitalWrite(motorRBW, LOW);
+  }
+
+
+
+  if(youtvoltage < SETV && ydiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorYFW, HIGH);
+  } else {
+    digitalWrite(motorYFW, LOW);
+  }
+  if(youtvoltage > SETV && ydiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorYBW, HIGH);
+  } else {
+    digitalWrite(motorYBW, LOW);
+  }
+
+
+  if(boutvoltage < SETV && bdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorBFW, HIGH);
+  } else {
+    digitalWrite(motorBFW, LOW);
+  }
+  if(boutvoltage > SETV && bdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorBBW, HIGH);
+  } else {
+    digitalWrite(motorBBW, LOW);
   }
 
   if(checksystem()){
@@ -380,13 +430,13 @@ bool checksystem() {
 void updatePower() {
   if(checksystem()){
     if(on.triggered(false)){  
-      digitalWrite(power, HIGH);
+      digitalWrite(contactor, HIGH);
       off.reset();
     }
   }
   else {
     if(off.triggered(false)) {
-      digitalWrite(power, LOW);
+      digitalWrite(contactor, LOW);
       on.reset();
     }
   }
@@ -457,30 +507,56 @@ void updateScreenData(bool status) {
     switch (menu)
     {
     case 0:
-      display("InPu", 0);
+      display("noor", 0);
       break;
     case 1:
-      displayVar(involtage, 0);
+      display("r IP", 0);
       break;
     case 2:
-      display("Outu", 0);
+      displayVar(rinvoltage, 0);
       break;
     case 3:
-      displayVar(outvoltage, 0);
+      display("r OP", 0);
       break;
     case 4:
-      display("LoAd", 0);
+      displayVar(routvoltage, 0);
       break;
     case 5:
-      displayVar(currentload, 0);
+      display("Y IP", 0);
       break;
     case 6:
-      display("FrEq", 0);
+      displayVar(yinvoltage, 0);
       break;
     case 7:
-      displayVar((int)freq, 0);
+      display("Y OP", 0);
       break;
     case 8:
+      displayVar(youtvoltage, 0);
+      break;
+    case 9:
+      display("b IP", 0);
+      break;
+    case 10:
+      displayVar(binvoltage, 0);
+      break;
+    case 11:
+      display("b OP", 0);
+      break;
+    case 12:
+      displayVar(boutvoltage, 0);
+      break;
+    case 13:
+      display("LoAd", 0);
+      break;
+    case 14:
+      displayVar(currentload, 0);
+      break;
+    case 15:
+      display("FrEq", 0);
+      break;
+    case 16:
+      displayVar((int)freq, 0);
+    case 17:
       if(status){
         menu = 0;
       } else {
@@ -548,25 +624,33 @@ void checkinputs() {
 }
 
 void IVo() {
-float inpv;
 for(int i=0; i<10; i++) {
-  if((0.343 * analogRead(inVolt)) > inpv){
-    inpv = 0.343 * analogRead(inVolt);
+  if((0.343 * analogRead(RINPIN)) > rinvoltage){
+    rinvoltage = 0.343 * analogRead(RINPIN);
+    }
+  if((0.343 * analogRead(YINPIN)) > yinvoltage){
+    yinvoltage = 0.343 * analogRead(YINPIN);
+    }
+  if((0.343 * analogRead(BINPIN)) > binvoltage){
+    binvoltage = 0.343 * analogRead(BINPIN);
     }
   }
-involtage = inpv;
 }
 
 
 
 void OVo() {
-float oppv;
 for(int i=0; i<10; i++) {
-  if((0.343 * analogRead(outVolt)) > oppv){
-    oppv = 0.343 * analogRead(outVolt);
+  if((0.343 * analogRead(ROTPIN)) > routvoltage){
+    routvoltage = 0.343 * analogRead(ROTPIN);
+    }
+  if((0.343 * analogRead(YOTPIN)) > youtvoltage){
+    youtvoltage = 0.343 * analogRead(YOTPIN);
+    }
+  if((0.343 * analogRead(BOTPIN)) > boutvoltage){
+    boutvoltage = 0.343 * analogRead(BOTPIN);
     }
   }
-outvoltage = oppv;
 }
 
 void ampo() {
@@ -683,9 +767,12 @@ void menuEND() {
 //Change Screens/Menus on pessing OK/Menu
 
 void runSetup() {
-  digitalWrite(motor0Fwd, LOW);
-  digitalWrite(motor0Rev, LOW);
+  int OTs[7] = { motorRFW, motorRBW, motorYFW, motorYBW, motorBFW, motorBBW, contactor };
   
+  for(int i = 0; i < 7; i++){
+    digitalWrite(OTs[i], LOW);
+  }
+
   switch (encMenu)
   {
   case 0:
