@@ -18,7 +18,7 @@ MCU Clock: 8Mhz (Internal Oscillator)
 
 MCU Fuse Bits: 
  FuseLow : 0xE2
- FuseHigh: 0xD9
+ FuseHigh: 0x99
  For BOD 2.7v - FuseExtended: 0xFD
  For BOD 4.3v - FuseExtended: 0xFC //The one i use.
 
@@ -30,19 +30,30 @@ WARN: This will only work with Internal Oscillator as Occillator Pins are being 
 Project Start Date: 17-Nov-2022
 Last Update: 24-Dec-2022
 
-Input Voltage: Pin PC0 (Through Voltage Divider)
-Output Voltage: Pin PC1 (Through Voltage Divider)
-Current CT Sensor: Pin PC2 (Through Voltage Divider)
-Input AC supply for Frequency: Pin PB4 (Through Voltage Divider) ----------------+
-                                                                                 | Same Pin
-Servo Motor Forward: Pin PB6                                                     | Using as Frequency
-Servo Motor Reverse: Pin PB7                                                     | Input as Setup Pin is No longer being used
-                                                                                 | Due to I/O Limitation Issues.
-ok/Menu button: Pin PC3                                                          | 
-                                                                                 |
-plus/Up button: Pin PC4 -----------------------+ To Open Setup Press All Buttons |
-minus/Down button: Pin PC5                     |       At the Same Time!         |
-setup/Settings button: Pin PB4 ----------------+---------------------------------+ 
+Input Voltage: Phase R: PIN PA0
+               Phase Y: PIN PA1
+               Phase B: PIN PA2
+
+Output Voltage: Phase R: PIN PA3
+                Phase Y: PIN PA4
+                Phase B: PIN PA5
+Current CT:   ALL Phase: PIN PA6
+
+Input AC supply for Frequency: PIN PA3 //Using Same pin as Phase R Output Voltage Pin
+                                                                 
+Servo Motor: Phase R: Forward: PIN PB0
+                      Reverse: PIN PB1
+             Phase Y: Forward: PIN PB2
+                      Reverse: PIN PB3
+             Phase B: Forward: PIN PB4
+                      Reverse: PIN PB5
+
+Power Relay / Contactor Relay: PIN PB6                        
+                                                             
+ok/Menu button: Pin PC4 -----------------------+                                                             
+plus/Up button: Pin PC5                        | To Open Setup Press All Buttons 
+minus/Down button: Pin PC6                     |       At the Same Time!         
+setup/Settings button: NONE -------------------+ 
 
 Display I/O are Defined in setupDisplay() function at the end of the code.
 
@@ -56,17 +67,24 @@ Parameters: IHu/IHv = Input High Voltage
             TOff = Relay/Contactor CUTOFF Delay
             DIFF = Voltage Difference from Set Voltage
 
-Run Mode Display: InPu/InPv = Current Input Voltage
-                  Outu/Outv = Current Output Voltage
-                  LoAd =  Current (in Ampere)
-                  FrEq = Current Frequency (Only updates once per display cycle)           
+Run Mode Display: NOOR: WaterMark
+                  R IP: R Phase Input Voltage
+                  R OP: R Phase Output Voltage
+                  Y IP: Y Phase Input Voltage
+                  Y OP: Y Phase Output Voltage
+                  B IP: B Phase Input Voltage
+                  B OP: B Phase Output Voltage
+                  LoAd: Current in AMPs
+                  Freq: AC Frequency of Phase R        
 
-ALARMS: ErIn = Input Voltage Error (Either too low or too high)
-        ErOt = Output Voltage Error (Either too low or too high)
-        ErOL = OverLoad Error (Current drawn is more than the rated current)
-        ErAL = All Alarms (Possible Reason: Board is not connected to Input and Output of Dimmer/Inverter
-               Load Sensor is Not connected or this is first run and parameters are yet to be Configured)
-        Er0b = Bugged Alarm (Possible that two Alarms are active at same time instead of all Three)
+ALARMS: A AI: All Input Voltage Error
+        A AO: All Output Voltage Error
+        A rI: R Phase Input Voltage Error
+        A yI: Y Phase Input Voltage Error
+        A bI: B Phase Input Voltage Error
+        A rO: R Phase Output Voltage Error
+        A yO: Y Phase Output Voltage Error
+        A bO: B Phase Output Voltage Error
 
 */
 
@@ -269,6 +287,7 @@ void loop() {
     mode = !mode;
     switched = true;
     encMenu = 0;
+    refresh.start(true);
   }
   if(!read(ok) && !read(plus) && !read(minus) && switched == true){
     switched = false;
@@ -444,6 +463,55 @@ void updatePower() {
 
 //Update Run Mode Screen
 
+bool RINOK() {
+  if(rinvoltage > ILV && rinvoltage < IHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool YINOK() {
+  if(yinvoltage > ILV && yinvoltage < IHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool BINOK() {
+  if(binvoltage > ILV && binvoltage < IHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool ROTOK() {
+  if(routvoltage > OLV && routvoltage < OHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool YOTOK() {
+  if(youtvoltage > OLV && youtvoltage < OHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool BOTOK() {
+  if(boutvoltage > OLV && boutvoltage < OHV){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 void updateScreenData(bool status) {
   //uncomment !mode and comment !read(setupPin) if setupPin is not being used
   if(!mode/*!read(setupPin)*/){
@@ -490,13 +558,23 @@ void updateScreenData(bool status) {
     
     if(!status && menu == -1){
       if(!inputVok() && !outputVok() && !currentok()){
-        display("ALAL", 0);
+        display("A AL", 0);
       } else {
         if(!inputVok()){
-          display("ALIn", 0);
+          if(!RINOK() && !YINOK() && !BINOK()) { display("A AI", 0);}
+          else{
+            if(!RINOK()){ display("A rI", 0); }
+            if(!YINOK()){ display("A yI", 0); }
+            if(!BINOK()){ display("A bI", 0); }
+          }
         }
         if(!outputVok()){
-          display("ALOt", 0);
+          if(!ROTOK() && !YOTOK() && !BOTOK()) { display("A AO", 0);}
+          else{
+            if(!ROTOK()){ display("A rO", 0); }
+            if(!YOTOK()){ display("A yO", 0); }
+            if(!BOTOK()){ display("A bO", 0); }
+          }
         }
         if(!currentok()){
           display("ALOL", 0);
@@ -816,10 +894,20 @@ void runSetup() {
 
 //Check OK Button Pressed
 
+bool tmrstp;
+
 void checkok() {
   if(read(ok) && okold == !read(ok)){
   okold = read(ok);
   encMenu++;
+  if(!mode && !tmrstp){
+    refresh.stop();
+    tmrstp = !tmrstp;
+  }
+  if(!mode && tmrstp){
+    refresh.start();
+    tmrstp = !tmrstp;
+  }
   refresh.reset();
   encUpdate();
   eepromUpdate();
@@ -924,6 +1012,9 @@ void checkplus() {
   if(read(plus) && plusold == !read(plus)){
   plusold = read(plus);
   enc++;
+  if(!mode){
+    menu++;
+  }
   }
   if(read(plus) == false){
   plusold = read(plus);
@@ -936,6 +1027,9 @@ void checkminus() {
   if(read(minus) && minusold == !read(minus)){
   minusold = read(minus);
   enc--;
+  if(!mode){
+    menu--;
+  }
   }
   if(read(minus) == false){
   minusold = read(minus);
