@@ -490,16 +490,16 @@ void updateScreenData(bool status) {
     
     if(!status && menu == -1){
       if(!inputVok() && !outputVok() && !currentok()){
-        display("ErAL", 0);
+        display("ALAL", 0);
       } else {
         if(!inputVok()){
-          display("ErIn", 0);
+          display("ALIn", 0);
         }
         if(!outputVok()){
-          display("ErOt", 0);
+          display("ALOt", 0);
         }
         if(!currentok()){
-          display("ErOL", 0);
+          display("ALOL", 0);
         }
       }
     }
@@ -602,15 +602,15 @@ void updateScreenData(bool status) {
 ////////////////////////////////////////////////////////////////
 /*
 void IVo() {
-  involtage = 0.343 * analogRead(inVolt);
+  involtage = 0.64 * analogRead(inVolt);
 }
 
 void OVo() {
-  outvoltage = 0.343 * analogRead(outVolt);
+  outvoltage = 0.64 * analogRead(outVolt);
 }
 
 void ampo() {
-  currentload = 0.343 * analogRead(current); /// No Longer Used...
+  currentload = 0.64 * analogRead(current); /// No Longer Used...
 }
 */
 /////////////////////////////////////////////////////////////////
@@ -625,14 +625,14 @@ void checkinputs() {
 
 void IVo() {
 for(int i=0; i<10; i++) {
-  if((0.343 * analogRead(RINPIN)) > rinvoltage){
-    rinvoltage = 0.343 * analogRead(RINPIN);
+  if((0.64 * analogRead(RINPIN)) > rinvoltage){
+    rinvoltage = 0.64 * analogRead(RINPIN);
     }
-  if((0.343 * analogRead(YINPIN)) > yinvoltage){
-    yinvoltage = 0.343 * analogRead(YINPIN);
+  if((0.64 * analogRead(YINPIN)) > yinvoltage){
+    yinvoltage = 0.64 * analogRead(YINPIN);
     }
-  if((0.343 * analogRead(BINPIN)) > binvoltage){
-    binvoltage = 0.343 * analogRead(BINPIN);
+  if((0.64 * analogRead(BINPIN)) > binvoltage){
+    binvoltage = 0.64 * analogRead(BINPIN);
     }
   }
 }
@@ -641,14 +641,14 @@ for(int i=0; i<10; i++) {
 
 void OVo() {
 for(int i=0; i<10; i++) {
-  if((0.343 * analogRead(ROTPIN)) > routvoltage){
-    routvoltage = 0.343 * analogRead(ROTPIN);
+  if((0.64 * analogRead(ROTPIN)) > routvoltage){
+    routvoltage = 0.64 * analogRead(ROTPIN);
     }
-  if((0.343 * analogRead(YOTPIN)) > youtvoltage){
-    youtvoltage = 0.343 * analogRead(YOTPIN);
+  if((0.64 * analogRead(YOTPIN)) > youtvoltage){
+    youtvoltage = 0.64 * analogRead(YOTPIN);
     }
-  if((0.343 * analogRead(BOTPIN)) > boutvoltage){
-    boutvoltage = 0.343 * analogRead(BOTPIN);
+  if((0.64 * analogRead(BOTPIN)) > boutvoltage){
+    boutvoltage = 0.64 * analogRead(BOTPIN);
     }
   }
 }
@@ -656,8 +656,8 @@ for(int i=0; i<10; i++) {
 void ampo() {
 float ampov;
 for(int i=0; i<10; i++) {
-  if((0.343 * analogRead(current)) > ampov){
-    ampov = 0.343 * analogRead(current);
+  if((0.1 * analogRead(current)) > ampov){
+    ampov = 0.1 * analogRead(current);
     }
   }
 currentload = ampov;
