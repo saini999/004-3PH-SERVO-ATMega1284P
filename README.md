@@ -33,7 +33,7 @@ Fuses Can be Set by reading the microcontroller datasheet or from the Website: h
 
 # I/O Setup
 
-WARN: This will only work with Internal Oscillator as Occillator Pins are being used as I/O.
+WARN: This will only work with Internal Oscillator as Occillator Pins are being used as I/O. (in case of using 40PIN PDIP μC)
 
 # ATMega1284P TQFP44 Pins and I/O Diagram
 
