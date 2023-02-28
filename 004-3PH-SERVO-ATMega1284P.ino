@@ -80,10 +80,10 @@ Run Mode Display: NOOR: WaterMark
 ALARMS: A AI: All Input Voltage Error
         A AO: All Output Voltage Error
         A rI: R Phase Input Voltage Error
-        A yI: Y Phase Input Voltage Error
+        A YI: Y Phase Input Voltage Error
         A bI: B Phase Input Voltage Error
         A rO: R Phase Output Voltage Error
-        A yO: Y Phase Output Voltage Error
+        A YO: Y Phase Output Voltage Error
         A bO: B Phase Output Voltage Error
 
 */
@@ -109,11 +109,11 @@ ALARMS: A AI: All Input Voltage Error
 #define motorRFW PIN_PB0
 #define motorRBW PIN_PB1
 #define motorYFW PIN_PB2
-#define motorYBW PIN_PB3
+#define motorYBW PIN_PB3  
 #define motorBFW PIN_PB4
 #define motorBBW PIN_PB5
 #define contactor PIN_PB6
-#define hz PIN_PA3
+#define hz PIN_PA7
 
 /*
 #define hz PIN_PC2
@@ -130,6 +130,9 @@ ALARMS: A AI: All Input Voltage Error
 SevSeg display1;
 //Timer that updates Main screen every Second.
 BlockNot refresh(1, SECONDS);
+BlockNot btn0(1, SECONDS);
+BlockNot btn1(1, SECONDS);
+BlockNot inch(100);
 //Timer that updates all Input Variables
 BlockNot checkin(250);
 
@@ -144,6 +147,29 @@ int OVL;
 int TON;
 int TOFF;
 int DIFF;
+int VCALRI, VCALRO, VCALYI, VCALYO, VCALBI, VCALBO;
+int ACAL;
+int DIRR;
+int DIRY;
+int DIRB;
+int padm[ 4 ] = {0, 0, 0, 0};
+///////////////////////////////////////////
+////////////////Admin Passcode/////////////
+//////////////////// 1313 /////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+/*
+float VCALBRI = VCALRI/1000;
+float VCALBRO = VCALRO/1000;
+float VCALBYI = VCALYI/1000;
+float VCALBYO = VCALYO/1000;
+float VCALBBI = VCALBI/1000;
+float VCALBBO = VCALBO/1000;
+*/
+//float acalb = ACAL/1000;
+
+
+//String padnumber;
 int enc;
 /////////////////////////////////////////////////////////////////////////////////////
 /*const int ok = PIN_PC3;
@@ -165,7 +191,11 @@ int menu;
 long ontime,offtime;
 float freq;   /*,hzdiff*/
 int rinvoltage,routvoltage,yinvoltage,youtvoltage,binvoltage,boutvoltage,currentload;
-
+int digstat;
+bool auth = false;
+//char load[5];
+//char frequency[5];
+//bool admin = false;
 
 bool okold = false;
 bool plusold = false;
@@ -200,7 +230,7 @@ setIN(ROTPIN);
 setIN(YOTPIN);
 setIN(BOTPIN);
 setIN(current);
-//setIN(hz);
+setIN(hz);
 ///////////////////////////////////////////////////////
 /////////comment setup pin if not needed///////////////
 //setIN(setupPin); //change setup mode from RUN/SETUP//
@@ -233,6 +263,25 @@ OVL = EEPROM.read(5);
 TON = EEPROM.read(6);
 TOFF = EEPROM.read(7);
 DIFF = EEPROM.read(8);
+VCALRI = 4 * EEPROM.read(9);
+VCALRO = 4 * EEPROM.read(10);
+VCALYI = 4 * EEPROM.read(11);
+VCALYO = 4 * EEPROM.read(12);
+VCALBI = 4 * EEPROM.read(13);
+VCALBO = 4 * EEPROM.read(14);
+ACAL = 4 * EEPROM.read(15);
+DIRR = EEPROM.read(16);
+DIRY = EEPROM.read(17);
+DIRB = EEPROM.read(18);
+
+/*
+VCALBRI = VCALRI/1000;
+VCALBRO = VCALRO/1000;
+VCALBYI = VCALYI/1000;
+VCALBYO = VCALYO/1000;
+VCALBBI = VCALBI/1000;
+VCALBBO = VCALBO/1000;
+*/
 /**/
 ///////////////////////////////////////////////////////////////////////
 //uncomment these variables while testing in proteus
@@ -302,10 +351,11 @@ void loop() {
 //offtime is the time that sinewave stays negative or below the 0v Threshold
 void checkhz() {
   //calculates the pulse width in milliseconds //timesout after 60ms to avoid blocking other code if no input is detected!
-  ontime = pulseIn(hz, HIGH, 60);
-  offtime = pulseIn(hz, LOW, 60);
+  ontime = pulseIn(hz, HIGH);
+  offtime = pulseIn(hz, LOW);
   //Calculates the Frequency by dividing the ontime and offtime with 1 sec time (or 1000000 ms)
   freq = 1000000.0 / (ontime + offtime);//(ontime + offtime);
+  //dtostrf(freq, 5, 2, frequency);
 }
 
 
@@ -386,6 +436,7 @@ void runNormal() {
     checkinputs();
   }
   //digitalWrite(motor0Rev, HIGH);
+  if(DIRR == 0){
   if(routvoltage < SETV && rdiffcheck() && inputVok() && currentok()){
     digitalWrite(motorRFW, HIGH);
   } else {
@@ -396,9 +447,21 @@ void runNormal() {
   } else {
     digitalWrite(motorRBW, LOW);
   }
+  }else{
+  if(routvoltage > SETV && rdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorRFW, HIGH);
+  } else {
+    digitalWrite(motorRFW, LOW);
+  }
+  if(routvoltage < SETV && rdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorRBW, HIGH);
+  } else {
+    digitalWrite(motorRBW, LOW);
+  }
+  }
 
 
-
+  if(DIRY == 0){
   if(youtvoltage < SETV && ydiffcheck() && inputVok() && currentok()){
     digitalWrite(motorYFW, HIGH);
   } else {
@@ -409,8 +472,23 @@ void runNormal() {
   } else {
     digitalWrite(motorYBW, LOW);
   }
+  }else{
+  if(youtvoltage > SETV && ydiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorYFW, HIGH);
+  } else {
+    digitalWrite(motorYFW, LOW);
+  }
+  if(youtvoltage < SETV && ydiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorYBW, HIGH);
+  } else {
+    digitalWrite(motorYBW, LOW);
+  }
+  }
 
 
+
+
+  if(DIRB == 0){
   if(boutvoltage < SETV && bdiffcheck() && inputVok() && currentok()){
     digitalWrite(motorBFW, HIGH);
   } else {
@@ -421,6 +499,20 @@ void runNormal() {
   } else {
     digitalWrite(motorBBW, LOW);
   }
+  }else{
+  if(boutvoltage > SETV && bdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorBFW, HIGH);
+  } else {
+    digitalWrite(motorBFW, LOW);
+  }
+  if(boutvoltage < SETV && bdiffcheck() && inputVok() && currentok()){
+    digitalWrite(motorBBW, HIGH);
+  } else {
+    digitalWrite(motorBBW, LOW);
+  }
+  }
+
+
 
   if(checksystem()){
     updateScreenData(true);
@@ -447,6 +539,7 @@ bool checksystem() {
 //Control Output Supply Relay
 
 void updatePower() {
+  //digitalWrite(contactor, HIGH);
   if(checksystem()){
     if(on.triggered(false)){  
       digitalWrite(contactor, HIGH);
@@ -536,7 +629,7 @@ void updateScreenData(bool status) {
 
       switch (menu)
       {
-        case 6:
+        case 28:
           checkhz();
           break;
         case 0:
@@ -566,7 +659,7 @@ void updateScreenData(bool status) {
           if(!RINOK() && !YINOK() && !BINOK()) { display("A AI", 0);}
           else{
             if(!RINOK()){ display("A rI", 0); }
-            if(!YINOK()){ display("A yI", 0); }
+            if(!YINOK()){ display("A YI", 0); }
             if(!BINOK()){ display("A bI", 0); }
           }
         }
@@ -574,7 +667,7 @@ void updateScreenData(bool status) {
           if(!ROTOK() && !YOTOK() && !BOTOK()) { display("A AO", 0);}
           else{
             if(!ROTOK()){ display("A rO", 0); }
-            if(!YOTOK()){ display("A yO", 0); }
+            if(!YOTOK()){ display("A YO", 0); }
             if(!BOTOK()){ display("A bO", 0); }
           }
         }
@@ -626,25 +719,25 @@ void updateScreenData(bool status) {
       displayVar(boutvoltage, 0);
       break;
     case 13:
-      display("ryIP", 0);
+      display("rYIP", 0);
       break;
     case 14:
       displayVar((rinvoltage + yinvoltage) * 0.866, 0);
       break;
     case 15:
-      display("ryOP", 0);
+      display("rYOP", 0);
       break;
     case 16:
       displayVar((routvoltage + youtvoltage) * 0.866, 0);
       break;
     case 17:
-      display("ybIP", 0);
+      display("YbIP", 0);
       break;
     case 18:
       displayVar((yinvoltage + binvoltage) * 0.866, 0);
       break;
     case 19:
-      display("ybOP", 0);
+      display("YbOP", 0);
       break;
     case 20:
       displayVar((youtvoltage + boutvoltage) * 0.866, 0);
@@ -665,13 +758,14 @@ void updateScreenData(bool status) {
       display("LoAd", 0);
       break;
     case 26:
-      displayVar(currentload, 0);
+      displayVar((int)currentload, 0);
       break;
     case 27:
       display("FrEq", 0);
       break;
     case 28:
       displayVar((int)freq, 0);
+      break;
     case 29:
       if(status){
         menu = 0;
@@ -746,43 +840,54 @@ void checkinputs() {
 }
 
 void IVo() {
-for(int i=0; i<10; i++) {
-  if((0.64 * analogRead(RINPIN)) > rinvoltage){
-    rinvoltage = 0.64 * analogRead(RINPIN);
+
+float rin1, yin1, bin1;
+for(int i=0; i<1; i++) {
+  if(((VCALRI/1000.0) * analogRead(RINPIN)) > rin1){
+    rin1 = (VCALRI/1000.0) * analogRead(RINPIN);
     }
-  if((0.64 * analogRead(YINPIN)) > yinvoltage){
-    yinvoltage = 0.64 * analogRead(YINPIN);
+  rinvoltage = (int)rin1;
+  if(((VCALYI/1000.0) * analogRead(YINPIN)) > yin1){
+    yin1 = (VCALYI/1000.0) * analogRead(YINPIN);
     }
-  if((0.64 * analogRead(BINPIN)) > binvoltage){
-    binvoltage = 0.64 * analogRead(BINPIN);
+  yinvoltage = (int)yin1;
+  if(((VCALBI/1000.0) * analogRead(BINPIN)) > bin1){
+    bin1 = (VCALBI/1000.0) * analogRead(BINPIN);
     }
+  binvoltage = (int)bin1;
   }
 }
 
 
 
 void OVo() {
-for(int i=0; i<10; i++) {
-  if((0.64 * analogRead(ROTPIN)) > routvoltage){
-    routvoltage = 0.64 * analogRead(ROTPIN);
+float rot1, yot1, bot1;
+for(int i=0; i<1; i++) {
+  if(((VCALRO/1000.0) * analogRead(ROTPIN)) > rot1){
+    rot1 = (VCALRO/1000.0) * analogRead(ROTPIN);
     }
-  if((0.64 * analogRead(YOTPIN)) > youtvoltage){
-    youtvoltage = 0.64 * analogRead(YOTPIN);
+  routvoltage = (int)rot1;
+  if(((VCALYO/1000.0) * analogRead(YOTPIN)) > yot1){
+    yot1 = (VCALYO/1000.0) * analogRead(YOTPIN);
     }
-  if((0.64 * analogRead(BOTPIN)) > boutvoltage){
-    boutvoltage = 0.64 * analogRead(BOTPIN);
+  youtvoltage = (int)yot1;
+  if(((VCALBO/1000.0) * analogRead(BOTPIN)) > bot1){
+    bot1 = (VCALBO/1000.0) * analogRead(BOTPIN);
     }
+  boutvoltage = (int)bot1;
   }
 }
 
 void ampo() {
 float ampov;
-for(int i=0; i<10; i++) {
-  if((0.1 * analogRead(current)) > ampov){
-    ampov = 0.1 * analogRead(current);
+for(int i=0; i<1; i++) {
+  if(((ACAL/1000.0) * analogRead(current)) > ampov){
+    ampov = (ACAL/1000.0) * analogRead(current);
     }
   }
 currentload = ampov;
+//dtostrf(ampov, 5, 1, load);
+
 }
 
 ////////////////////////////////////////////////////////////
@@ -872,6 +977,8 @@ void menuTOFF() {
   }
 }
 
+
+
 //setup voltage difference from set voltage to move motor
 
 void menuDIFF() {
@@ -882,6 +989,122 @@ void menuDIFF() {
   }
 }
 
+void menuPADM() {
+    String padnumber;
+    padnumber = padnumber + (String)padm[ 0 ];
+    padnumber = padnumber + (String)padm[ 1 ];
+    padnumber = padnumber + (String)padm[ 2 ];
+    padnumber = padnumber + (String)padm[ 3 ];
+    if(refresh.triggered(false)){
+    display(padnumber, 0);
+  } else {
+    display("P Ad", 0);
+  }
+}
+
+
+void adminHome(){
+  display("nAS", 0);
+}
+
+void voltCalibRI() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("rICL", 0);
+  }
+}
+
+
+void voltCalibRO() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("roCL", 0);
+  }
+}
+
+
+void voltCalibYI() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("YICL", 0);
+  }
+}
+
+
+void voltCalibYO() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("YoCL", 0);
+  }
+}
+
+
+void voltCalibBI() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("bICL", 0);
+  }
+}
+
+
+void voltCalibBO() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("boCL", 0);
+  }
+}
+
+void ampCalib() {
+  if(refresh.triggered(false)){
+    displayVar(enc, 0);
+  } else {
+    display("ACAL", 0);
+  }
+}
+
+void motorDirR() {
+  if(refresh.triggered(false)){
+    if(enc == 0){
+      display("R Fd", 0);
+    } else if(enc == 1){
+      display("R bd", 0);
+    }
+  } else {
+    display("dIrr", 0);
+  }
+}
+
+void motorDirY() {
+  if(refresh.triggered(false)){
+    if(enc == 0){
+      display("Y Fd", 0);
+    } else if(enc == 1){
+      display("Y bd", 0);
+    }
+  } else {
+    display("dIrY", 0);
+  }
+}
+
+void motorDirB() {
+  if(refresh.triggered(false)){
+    if(enc == 0){
+      display("b Fd", 0);
+    } else if(enc == 1){
+      display("b bd", 0);
+    }
+  } else {
+    display("dIrb", 0);
+  }
+}
+
+
 void menuEND() {
   display("End", 0);
 }
@@ -889,51 +1112,158 @@ void menuEND() {
 //Change Screens/Menus on pessing OK/Menu
 
 void runSetup() {
+  if(digstat > 3){ digstat = 0; }
+  if(padm[ 0 ] > 9) { padm[ 0 ] = 0; }
+  if(padm[ 1 ] > 9) { padm[ 1 ] = 0; }
+  if(padm[ 2 ] > 9) { padm[ 2 ] = 0; }
+  if(padm[ 3 ] > 9) { padm[ 3 ] = 0; }
   int OTs[7] = { motorRFW, motorRBW, motorYFW, motorYBW, motorBFW, motorBBW, contactor };
-  
+  //digitalWrite(contactor, HIGH);
   for(int i = 0; i < 7; i++){
     digitalWrite(OTs[i], LOW);
   }
-
-  switch (encMenu)
+  if(auth == false){
+    switch (encMenu)
+    {
+    case 0:
+      home();
+      break;
+    case 1:
+      menuIHV();
+      break;
+    case 2:
+      menuILV();
+      break;
+    case 3:
+      menuOHV();
+      break;
+    case 4:
+      menuOLV();
+      break;
+    case 5:
+      menuSETV();
+      break;
+    case 6:
+      menuOVL();
+      break;
+    case 7:
+      menuTON();
+      break;
+    case 8:
+      menuTOFF();
+      break;
+    case 9:
+      menuDIFF();
+      break;
+    case 10:
+      menuPADM();
+      break;
+    case 11:
+      menuEND();
+      break;
+    default:
+      encMenu = 0;
+      break;
+    }
+  }
+  if(auth == true)
   {
-  case 0:
-    home();
-    break;
-  case 1:
-    menuIHV();
-    break;
-  case 2:
-    menuILV();
-    break;
-  case 3:
-    menuOHV();
-    break;
-  case 4:
-    menuOLV();
-    break;
-  case 5:
-    menuSETV();
-    break;
-  case 6:
-    menuOVL();
-    break;
-  case 7:
-    menuTON();
-    break;
-  case 8:
-    menuTOFF();
-    break;
-  case 9:
-    menuDIFF();
-    break;
-  case 10:
-    menuEND();
-    break;
-  default:
-    encMenu = 0;
-    break;
-  } 
+    switch (encMenu)
+    {
+      case 0:
+        adminHome();
+        break;
+      case 1:
+        voltCalibRI();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 2:
+        voltCalibRO();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 3:
+        voltCalibYI();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 4:
+        voltCalibYO();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 5:
+        voltCalibBI();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 6:
+        voltCalibBO();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 7:
+        ampCalib();
+        if(enc > 999){
+          enc = 0;
+        } else if(enc < 0){
+          enc = 999;
+        }
+        break;
+      case 8:
+        motorDirR();
+        if(enc > 1){
+          enc = 0;
+        } else if (enc < 0){
+          enc = 1;
+        }
+        break;
+      case 9:
+        motorDirY();
+        if(enc > 1){
+          enc = 0;
+        } else if (enc < 0){
+          enc = 1;
+        }
+        break;
+      case 10:
+        encMenu = 11;
+        break;
+      case 11:
+        motorDirB();
+        if(enc > 1){
+          enc = 0;
+        } else if (enc < 0){
+          enc = 1;
+        }
+        break;
+      case 12:
+        menuEND();
+        break;
+      default:
+        encMenu = 0;
+        break;
+    }
+  }
 }
 
 //Check OK Button Pressed
@@ -943,7 +1273,19 @@ void runSetup() {
 void checkok() {
   if(read(ok) && okold == !read(ok)){
   okold = read(ok);
-  encMenu++;
+  if(encMenu != 10){
+    encMenu++;
+  } else if (encMenu == 10){
+    // here 1313 is the secret admin code for opening motor direction and calibration settings
+    if(padm[ 0 ] == 1 && padm[ 1 ] == 3 && padm[ 2 ] == 1 && padm[ 3 ] == 3){
+      //if(padm == pass){
+      auth = true;
+      encMenu = 0;
+    }
+    else{
+      encMenu++;
+    }
+  }
   if(!mode && !tmrstp){
     tmrstp = true;
   }
@@ -971,12 +1313,22 @@ void eepromUpdate() {
   EEPROM.update(6, TON);
   EEPROM.update(7, TOFF);
   EEPROM.update(8, DIFF);
+  EEPROM.update(9, VCALRI/4);
+  EEPROM.update(10, VCALRO/4);
+  EEPROM.update(11, VCALYI/4);
+  EEPROM.update(12, VCALYO/4);
+  EEPROM.update(13, VCALBI/4);
+  EEPROM.update(14, VCALBO/4);
+  EEPROM.update(15, ACAL/4);
+  EEPROM.update(16, DIRR);
+  EEPROM.update(17, DIRY);
+  EEPROM.update(18, DIRB);
 }
 
 //Update Parameters on Menu Change
 
 void encUpdate() {
-  
+if(auth == false){  
   switch (encMenu)
   {
   case 0:
@@ -1032,10 +1384,82 @@ void encUpdate() {
   case 10:
     DIFF = enc;
     done();
+    padm[ 0 ] = 0;
+    padm[ 1 ] = 0;
+    padm[ 2 ] = 0;
+    padm[ 3 ] = 0;
     break;
   default:
     break;
   }
+}
+if(auth == true){
+  switch (encMenu)
+  {
+  case 0:
+    break;
+  case 1:
+    enc = VCALRI;
+    done();
+    break;
+  case 2:
+    VCALRI = enc;
+    //VCALBRI = VCALRI/1000;
+    enc = VCALRO;
+    done();
+    break;
+  case 3:
+    VCALRO = enc;
+    //VCALBRO = VCALRO/1000;
+    enc = VCALYI;
+    done();
+    break;
+  case 4:
+    VCALYI = enc;
+    //VCALBYI = VCALYI/1000;
+    enc = VCALYO;
+    done();
+    break;
+  case 5:
+    VCALYO = enc;
+    //VCALBYO = VCALYO/1000;
+    enc = VCALBI;
+    done();
+    break;
+  case 6:
+    VCALBI = enc;
+    //VCALBBI = VCALBI/1000;
+    enc = VCALBO;
+    done();
+    break;
+  case 7:
+    VCALBO = enc;
+    //VCALBBO = VCALBO/1000;
+    enc = ACAL;
+    done();
+    break;
+  case 8:
+    ACAL = enc;
+    //acalb = ACAL/1000;
+    enc = DIRR;
+    done();
+    break;
+  case 9:
+    DIRR = enc;
+    enc = DIRY;
+    done();
+    break;
+  case 11:
+    DIRY = enc;
+    enc = DIRB;
+    done();
+    break;
+  case 12:
+    DIRB = enc;
+    done();
+    break;
+  }
+}
 }
 
 void done() {display("donE", 0);}
@@ -1050,31 +1474,79 @@ void displayVar(int var, int deci) {
 
 //Check Plus Button Pressed
 
+
+
 void checkplus() {
+  if(encMenu != 10){
+    if(read(plus)){
+      if(btn0.triggered(false)){
+        if(inch.triggered(true)){
+          enc++;
+        }
+      }
+    }
+  }
   if(read(plus) && plusold == !read(plus)){
   plusold = read(plus);
-  enc++;
+  if(encMenu != 10){
+    enc++;
+  } else {
+    switch (digstat)
+    {
+      case 0:
+        padm[ 0 ]++;
+        break;
+      case 1:
+        padm[ 1 ]++;
+        break;
+      case 2:
+        padm[ 2 ]++;
+        break;
+      case 3:
+        padm[ 3 ]++;
+        break;
+      default:
+        break;
+    }
+  }
   if(!mode){
     menu++;
   }
   }
   if(read(plus) == false){
   plusold = read(plus);
+  btn0.reset();
   }
 }
 
 //Check Minus Button Pressed
 
+
+
 void checkminus() {
-  if(read(minus) && minusold == !read(minus)){
-  minusold = read(minus);
-  enc--;
-  if(!mode){
-    menu--;
+  if(encMenu != 10){
+    if(read(minus)){
+      if(btn1.triggered(false)){
+        if(inch.triggered(true)){
+          enc--;
+        }
+      }
+    }
   }
+  if(read(minus) && minusold == !read(minus)){
+    minusold = read(minus);
+    if(encMenu != 10){
+      enc--;
+    } if(encMenu == 10) {
+      digstat = digstat + 1;
+    }
+    if(!mode){
+      menu--;
+    }
   }
   if(read(minus) == false){
   minusold = read(minus);
+  btn1.reset();
   }
 }
 
