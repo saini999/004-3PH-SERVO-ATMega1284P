@@ -78,7 +78,7 @@ WARN: This will only work with Internal Oscillator as Occillator Pins are being 
     plus/Up button: Pin PC5
     minus/Down button: Pin PC6
 
-# [Display I/O are Defined in setupDisplay() function at the end of the code.](https://github.com/saini999/004-3PH-SERVO-ATMega1284P/blob/master/004-3PH-SERVO-ATMega1284P.ino#L1120)
+# [Display I/O are Defined in setupDisplay() function at the end of the code.](https://github.com/saini999/004-3PH-SERVO-ATMega1284P/blob/master/004-3PH-SERVO-ATMega1284P.ino#L1592)
 
 # Parameters
 
